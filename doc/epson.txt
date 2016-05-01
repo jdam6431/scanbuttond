@@ -1,0 +1,2 @@
+Technical documentation for Epson ESC/I scanners is available at
+http://www.epsondevelopers.com/guides/download_guide/60

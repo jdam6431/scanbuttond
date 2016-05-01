@@ -1,0 +1,60 @@
+Open Bugs
+---------
+
+* Some backends report a button press multiple times. This only applies
+to those backends which were implemented using information from "sniffing"
+and/or reverse engineering, i.e. plustek, snapscan and niash. 
+I would be glad if someone would volunteer to gather additional info about 
+the scanner communication protocol and fix these backends. 
+
+
+Open, but Resolvable Issues
+---------------------------
+
+* I got a few reports that scanbuttond is not initializing the scanner
+correctly in some cases. If scanbuttond seems to have troubles accessing the
+hardware, please have a look at "/etc/scanbuttond/initscanner.sh".
+This is the scanner initialization script which will be executed before
+scanbuttond tries to talk to your scanner. Sometimes it is necessary to let
+a SANE program initialize the scanner before it can be accessed by
+scanbuttond. Usually, putting something like "scanimage -n" in the
+initscanner.sh script should solve the problem.
+
+* If you are still using Linux 2.4.x: Note that the scanner can be accessed
+by either the scanner kernel module or from userspace by libusb - but you
+can't use both at the same time! Scanbuttond only supports libusb, so it
+won't work when the scanner kernel module is loaded. In this case, I'd
+suggest to get rid of the kernel module and switching to libusb (or even
+better: get a 2.6.x kernel since there is no scanner kernel module anymore).
+
+* Note that scanbuttond won't work without installation! It expects scripts
+and configuration files to be installed in /etc/scanbuttond as well as
+the dynamically loadable backend modules to be present in
+/usr/local/lib/scanbuttond.
+
+* People often complain that scanbuttond produces too many log messages on
+their systems. Actually, scanbuttond sends quite a lot of DEBUG messages to
+the logging daemon. However, on a properly configured system, these messages
+should not congest important logfiles, either because DEBUG messages are
+generally ignored, or because they are written to separate logfiles
+dedicated for less important or debugging messages. 
+So, please configure your logging system correctly. I am sorry that I can't
+tell you how to do that exactly, since there are a lot of different logging
+systems around (on Linux, for example, there exists klogd, syslog-ng,
+metalog, ...) and every logger has to be configured in a different way. You
+should find out which logger your system is using and consult its
+documentation.
+
+
+Fixed Bugs
+----------
+
+* Disconnectiong USB scanners caused older versions of scanbuttond to
+crash (SIGSEGV). This problem should be fixed as of version 0.2.1.
+
+* Be careful when using USB 2.0 with the linux ehci-hcd module. There
+seems to be a memory leak which makes your computer run out of free RAM
+after running scanbuttond for several days. The only workaround known to me
+is not to load ehci-hcd and using USB 1.x (uhci-hcd or ohci-hcd) instead.
+Update: This problem seems to be fixed in Linux 2.6.10.
+

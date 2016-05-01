@@ -58,4 +58,4 @@ pkgsysconf_DATA = meta.conf
 
 EXTRA_DIST = $(pkgsysconf_DATA)
 
-INCLUDES = $(all_includes) -I$(top_builddir)/include -I.
+AM_CPPFLAGS = $(all_includes) -I$(top_builddir)/include -I.

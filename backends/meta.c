@@ -34,7 +34,7 @@
 static char* backend_name = "Dynamic Module Loader";
 static char* config_file = STRINGIFY(CFG_DIR) "/meta.conf";
 
-static libusb_handle_t* libusb_handle;
+static libusbi_handle_t* libusb_handle;
 static scanner_t* meta_scanners = NULL;
 static backend_t* meta_backends = NULL;
 
@@ -167,7 +167,7 @@ int scanbtnd_init(void)
 		syslog(LOG_ERR, "meta-backend: could not init module loader!");
 		return error;
 	}
-	libusb_handle = libusb_init();
+	libusb_handle = libusbi_init();
 	if (!libusb_handle) {
 		syslog(LOG_ERR, "meta-backend: could not init libusb!");
 		scanbtnd_loader_exit();
@@ -238,7 +238,7 @@ int scanbtnd_open(scanner_t* scanner)
 {
 	// if devices have been added/removed, return -ENODEV to
 	// make scanbuttond update its device list
-	if (libusb_get_changed_device_count() != 0) {
+	if (libusbi_get_changed_device_count() != 0) {
 		return -ENODEV;
 	}
 	backend_t* backend = meta_lookup_backend(scanner);
@@ -276,7 +276,7 @@ int scanbtnd_exit(void)
 	syslog(LOG_INFO, "meta-backend: exit");
 	meta_detach_scanners();
 	meta_detach_backends();
-	libusb_exit(libusb_handle);
+	libusbi_exit(libusb_handle);
 	scanbtnd_loader_exit();
 	return 0;
 }

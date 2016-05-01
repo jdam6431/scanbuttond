@@ -42,7 +42,7 @@ static char* usb_device_descriptions[NUM_SUPPORTED_USB_DEVICES][2] = {
 	{ "Canon", "CanoScan LiDE 35" }
 };
 
-static libusb_handle_t* libusb_handle;
+static libusbi_handle_t* libusb_handle;
 static scanner_t* genesys_scanners = NULL;
 
 // Button Map for CanonScan LiDE 60
@@ -58,7 +58,7 @@ static char button_map_lide60[256] = {  0,  2,  3,  5,
 
 // returns -1 if the scanner is unsupported, or the index of the
 // corresponding vendor-product pair in the supported_usb_devices array.
-int genesys_match_libusb_scanner(libusb_device_t* device)
+int genesys_match_libusb_scanner(libusbi_device_t* device)
 {
    int index;
    for (index = 0; index < NUM_SUPPORTED_USB_DEVICES; index++) {
@@ -72,7 +72,7 @@ int genesys_match_libusb_scanner(libusb_device_t* device)
 }
 
 
-void genesys_attach_libusb_scanner(libusb_device_t* device)
+void genesys_attach_libusb_scanner(libusbi_device_t* device)
 {
    const char* descriptor_prefix = "genesys:libusb:";
    int index = genesys_match_libusb_scanner(device);
@@ -106,10 +106,10 @@ void genesys_detach_scanners(void)
 }
 
 
-void genesys_scan_devices(libusb_device_t* devices)
+void genesys_scan_devices(libusbi_device_t* devices)
 {
    int index;
-   libusb_device_t* device = devices;
+   libusbi_device_t* device = devices;
    while (device != NULL) {
       index = genesys_match_libusb_scanner(device);
       if (index >= 0) 
@@ -121,10 +121,10 @@ void genesys_scan_devices(libusb_device_t* devices)
 
 int genesys_init_libusb(void)
 {
-   libusb_device_t* devices;
+   libusbi_device_t* devices;
    
-   libusb_handle = libusb_init();
-   devices = libusb_get_devices(libusb_handle);
+   libusb_handle = libusbi_init();
+   devices = libusbi_get_devices(libusb_handle);
    genesys_scan_devices(devices);
    return 0;
 }
@@ -147,12 +147,12 @@ int scanbtnd_init(void)
 
 int scanbtnd_rescan(void)
 {
-   libusb_device_t* devices;
+   libusbi_device_t* devices;
    
    genesys_detach_scanners();
    genesys_scanners = NULL;
-   libusb_rescan(libusb_handle);
-   devices = libusb_get_devices(libusb_handle);
+   libusbi_rescan(libusb_handle);
+   devices = libusbi_get_devices(libusb_handle);
    genesys_scan_devices(devices);
    return 0;
 }
@@ -173,9 +173,9 @@ int scanbtnd_open(scanner_t* scanner)
       case CONNECTION_LIBUSB:
 	 // if devices have been added/removed, return -ENODEV to
 	 // make scanbuttond update its device list
-	 if (libusb_get_changed_device_count() != 0)
+	 if (libusbi_get_changed_device_count() != 0)
 	    return -ENODEV;
-	 result = libusb_open((libusb_device_t*)scanner->internal_dev_ptr);
+	 result = libusbi_open((libusbi_device_t*)scanner->internal_dev_ptr);
 	 break;
 	}
    if (result == 0)
@@ -191,7 +191,7 @@ int scanbtnd_close(scanner_t* scanner)
       return -EINVAL;
    switch (scanner->connection) {
       case CONNECTION_LIBUSB:
-	 result = libusb_close((libusb_device_t*)scanner->internal_dev_ptr);
+	 result = libusbi_close((libusbi_device_t*)scanner->internal_dev_ptr);
 	 break;
    }
    if (result == 0)
@@ -218,7 +218,7 @@ int scanbtnd_get_button(scanner_t* scanner)
    // 40 0c 83 00 00 00 01 00  -> 0x6d
    bytes[0] = 0x6d;
    bytes[1] = 0x00; // not really needed, but just to be sure ;-)
-   num_bytes = libusb_control_msg((libusb_device_t*)scanner->internal_dev_ptr,
+   num_bytes = libusbi_control_msg((libusbi_device_t*)scanner->internal_dev_ptr,
 				  0x40, 0x0c, 0x0083, 0x0000, (void *)bytes, 0x0001);
    
    if (num_bytes != 1) {
@@ -236,7 +236,7 @@ int scanbtnd_get_button(scanner_t* scanner)
    // returns 1f xored with the keys pressed
    // - this mean any key that is pressed gets it bit removed from 0x1f
    // - if multiple keys are pressed at the same time multiple bits will be removed
-   num_bytes = libusb_control_msg((libusb_device_t*)scanner->internal_dev_ptr,
+   num_bytes = libusbi_control_msg((libusbi_device_t*)scanner->internal_dev_ptr,
 				  0xc0, 0x0c, 0x0084, 0x0000, (void *)bytes, 0x0001);
    if (num_bytes != 1) {
       syslog(LOG_WARNING, "genesys-backend: communication error: "
@@ -259,7 +259,7 @@ int scanbtnd_exit(void)
 {
    syslog(LOG_INFO, "genesys-backend: exit");
    genesys_detach_scanners();
-   libusb_exit(libusb_handle);
+   libusbi_exit(libusb_handle);
    return 0;
 }
 

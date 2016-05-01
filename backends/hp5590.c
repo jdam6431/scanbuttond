@@ -46,14 +46,14 @@ static char* usb_device_descriptions[NUM_SUPPORTED_USB_DEVICES][2] =
        { "Hewlett-Packard", "Scanjet 7650" },
 };
 
-static libusb_handle_t* libusb_handle;
+static libusbi_handle_t* libusb_handle;
 static scanner_t* hp5590_scanners = NULL;
 
 /* returns -1 if the scanner is unsupported, or the index of the
  * corresponding vendor-product pair in the supported_usb_devices array.
  */
 static int
-hp5590_match_libusb_scanner(libusb_device_t* device)
+hp5590_match_libusb_scanner(libusbi_device_t* device)
 {
        int index;
 
@@ -71,7 +71,7 @@ hp5590_match_libusb_scanner(libusb_device_t* device)
 }
 
 static void
-hp5590_attach_libusb_scanner (libusb_device_t* device)
+hp5590_attach_libusb_scanner (libusbi_device_t* device)
 {
        const char* descriptor_prefix = "hp5590:libusb:";
        int             index;
@@ -111,10 +111,10 @@ hp5590_detach_scanners (void)
 }
 
 static void
-hp5590_scan_devices (libusb_device_t* devices)
+hp5590_scan_devices (libusbi_device_t* devices)
 {
        int index;
-       libusb_device_t* device = devices;
+       libusbi_device_t* device = devices;
        while (device != NULL)
        {
                index = hp5590_match_libusb_scanner (device);
@@ -127,10 +127,10 @@ hp5590_scan_devices (libusb_device_t* devices)
 static int
 hp5590_init_libusb (void)
 {
-       libusb_device_t* devices;
+       libusbi_device_t* devices;
 
-       libusb_handle = libusb_init ();
-       devices = libusb_get_devices (libusb_handle);
+       libusb_handle = libusbi_init ();
+       devices = libusbi_get_devices (libusb_handle);
        hp5590_scan_devices (devices);
        return 0;
 }
@@ -141,7 +141,7 @@ hp5590_flush (scanner_t* scanner)
        switch (scanner->connection)
        {
                case CONNECTION_LIBUSB:
-                       libusb_flush ((libusb_device_t*) scanner->internal_dev_ptr);
+                       libusbi_flush ((libusbi_device_t*) scanner->internal_dev_ptr);
                        break;
        }
 }
@@ -164,12 +164,12 @@ scanbtnd_init (void)
 int
 scanbtnd_rescan (void)
 {
-       libusb_device_t* devices;
+       libusbi_device_t* devices;
 
        hp5590_detach_scanners ();
        hp5590_scanners = NULL;
-       libusb_rescan (libusb_handle);
-       devices = libusb_get_devices (libusb_handle);
+       libusbi_rescan (libusb_handle);
+       devices = libusbi_get_devices (libusb_handle);
        hp5590_scan_devices (devices);
 
        return 0;
@@ -195,9 +195,9 @@ scanbtnd_open (scanner_t* scanner)
                        /* if devices have been added/removed, return -ENODEV to
                         * make scanbuttond update its device list
                         */
-                       if (libusb_get_changed_device_count () != 0)
+                       if (libusbi_get_changed_device_count () != 0)
                                return -ENODEV;
-                       result = libusb_open ((libusb_device_t*) scanner->internal_dev_ptr);
+                       result = libusbi_open ((libusbi_device_t*) scanner->internal_dev_ptr);
                        break;
        }
 
@@ -218,7 +218,7 @@ scanbtnd_close(scanner_t* scanner)
        switch (scanner->connection)
        {
                case CONNECTION_LIBUSB:
-                       result = libusb_close ((libusb_device_t*) scanner->internal_dev_ptr);
+                       result = libusbi_close ((libusbi_device_t*) scanner->internal_dev_ptr);
                        break;
        }
 
@@ -279,7 +279,7 @@ hp5590_get_ack (scanner_t *scanner)
        int                     ret;
 
        /* Check if USB-in-USB operation was accepted */
-       ret = libusb_control_msg ((libusb_device_t *) scanner->internal_dev_ptr,
+       ret = libusbi_control_msg ((libusbi_device_t *) scanner->internal_dev_ptr,
                                                          USB_DIR_IN | USB_TYPE_VENDOR,
                                                          0x0c, 0x8e, 0x20,
                                                          &status, sizeof (status));
@@ -324,7 +324,7 @@ hp5590_control_msg (scanner_t *scanner,
                ctrl.wLength = size;
 
                /* Send USB-in-USB control message */
-               ret = libusb_control_msg ((libusb_device_t *) scanner->internal_dev_ptr,
+               ret = libusbi_control_msg ((libusbi_device_t *) scanner->internal_dev_ptr,
                                                                  USB_DIR_OUT | USB_TYPE_VENDOR,
                                                                  0x04, 0x8f, 0x00,
                                                                  (unsigned char *) &ctrl, sizeof (ctrl));
@@ -349,7 +349,7 @@ hp5590_control_msg (scanner_t *scanner,
                                next_packet_size = len;
 
                        /* Read USB-in-USB data */
-                       ret = libusb_control_msg ((libusb_device_t *) scanner->internal_dev_ptr,
+                       ret = libusbi_control_msg ((libusbi_device_t *) scanner->internal_dev_ptr,
                                                                          USB_DIR_IN | USB_TYPE_VENDOR,
                                                                          core_flags & CORE_DATA ? 0x0c : 0x04,
                                                                          0x90, 0x00,
@@ -366,7 +366,7 @@ hp5590_control_msg (scanner_t *scanner,
 
                /* Confirm data reception */
                ack = 0;
-               ret = libusb_control_msg ((libusb_device_t *) scanner->internal_dev_ptr,
+               ret = libusbi_control_msg ((libusbi_device_t *) scanner->internal_dev_ptr,
                                                                  USB_DIR_OUT | USB_TYPE_VENDOR,
                                                                  0x0c, 0x8f, 0x00,
                                                                  &ack, sizeof (ack));
@@ -393,7 +393,7 @@ hp5590_control_msg (scanner_t *scanner,
                ctrl.wLength = size;
 
                /* Send USB-in-USB control message */
-               ret = libusb_control_msg ((libusb_device_t *) scanner->internal_dev_ptr,
+               ret = libusbi_control_msg ((libusbi_device_t *) scanner->internal_dev_ptr,
                                                                  USB_DIR_OUT | USB_TYPE_VENDOR,
                                                                  0x04, 0x8f, 0x00,
                                                                  (unsigned char *) &ctrl, sizeof (ctrl));
@@ -418,7 +418,7 @@ hp5590_control_msg (scanner_t *scanner,
                                next_packet_size = len;
 
                        /* Send USB-in-USB data */
-                       ret = libusb_control_msg ((libusb_device_t *) scanner->internal_dev_ptr,
+                       ret = libusbi_control_msg ((libusbi_device_t *) scanner->internal_dev_ptr,
                                                                          USB_DIR_OUT | USB_TYPE_VENDOR,
                                                                          core_flags & CORE_DATA ? 0x04 : 0x0c,
                                                                          0x8f, 0x00, ptr, next_packet_size);
@@ -449,7 +449,7 @@ hp5590_control_msg (scanner_t *scanner,
                }
 
                /* Getting  response after data transmission */
-               ret = libusb_control_msg ((libusb_device_t *) scanner->internal_dev_ptr,
+               ret = libusbi_control_msg ((libusbi_device_t *) scanner->internal_dev_ptr,
                                                                  USB_DIR_IN | USB_TYPE_VENDOR,
                                                                  0x0c, 0x90, 0x00,
                                                                  &response, sizeof (response));
@@ -578,6 +578,6 @@ scanbtnd_exit (void)
 {
        syslog (LOG_INFO, "hp5590-backend: exit");
        hp5590_detach_scanners ();
-       libusb_exit (libusb_handle);
+       libusbi_exit (libusb_handle);
        return 0;
 }

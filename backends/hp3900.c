@@ -56,13 +56,13 @@ static char* usb_device_descriptions[NUM_SUPPORTED_USB_DEVICES][2] = {
 };
 
 
-libusb_handle_t* libusb_handle;
+libusbi_handle_t* libusb_handle;
 scanner_t* hp3900_scanners = NULL;
 
 
 // returns -1 if the scanner is unsupported, or the index of the
 // corresponding vendor-product pair in the supported_usb_devices array.
-int hp3900_match_libusb_scanner(libusb_device_t* device)
+int hp3900_match_libusb_scanner(libusbi_device_t* device)
 {
 	int index;
 	for (index = 0; index < NUM_SUPPORTED_USB_DEVICES; index++) {
@@ -76,7 +76,7 @@ int hp3900_match_libusb_scanner(libusb_device_t* device)
 }
 
 
-void hp3900_attach_libusb_scanner(libusb_device_t* device)
+void hp3900_attach_libusb_scanner(libusbi_device_t* device)
 {
 	const char* descriptor_prefix = "hp3900:libusb:";
 	int index = hp3900_match_libusb_scanner(device);
@@ -110,10 +110,10 @@ void hp3900_detach_scanners(void)
 }
 
 
-void hp3900_scan_devices(libusb_device_t* devices)
+void hp3900_scan_devices(libusbi_device_t* devices)
 {
 	int index;
-	libusb_device_t* device = devices;
+	libusbi_device_t* device = devices;
 	while (device != NULL) {
 		index = hp3900_match_libusb_scanner(device);
 		if (index >= 0) 
@@ -125,10 +125,10 @@ void hp3900_scan_devices(libusb_device_t* devices)
 
 int hp3900_init_libusb(void)
 {
-	libusb_device_t* devices;
+	libusbi_device_t* devices;
 
-	libusb_handle = libusb_init();
-	devices = libusb_get_devices(libusb_handle);
+	libusb_handle = libusbi_init();
+	devices = libusbi_get_devices(libusb_handle);
 	hp3900_scan_devices(devices);
 	return 0;
 }
@@ -151,12 +151,12 @@ int scanbtnd_init(void)
 
 int scanbtnd_rescan(void)
 {
-	libusb_device_t* devices;
+	libusbi_device_t* devices;
 
 	hp3900_detach_scanners();
 	hp3900_scanners = NULL;
-	libusb_rescan(libusb_handle);
-	devices = libusb_get_devices(libusb_handle);
+	libusbi_rescan(libusb_handle);
+	devices = libusbi_get_devices(libusb_handle);
 	hp3900_scan_devices(devices);
 	return 0;
 }
@@ -177,9 +177,9 @@ int scanbtnd_open(scanner_t* scanner)
 		case CONNECTION_LIBUSB:
 			// if devices have been added/removed, return -ENODEV to
 			// make scanbuttond update its device list
-			if (libusb_get_changed_device_count() != 0)
+			if (libusbi_get_changed_device_count() != 0)
 				return -ENODEV;
-			result = libusb_open((libusb_device_t*)scanner->internal_dev_ptr);
+			result = libusbi_open((libusbi_device_t*)scanner->internal_dev_ptr);
 			break;
 	}
 	if (result == 0)
@@ -195,7 +195,7 @@ int scanbtnd_close(scanner_t* scanner)
 		return -EINVAL;
 	switch (scanner->connection) {
 		case CONNECTION_LIBUSB:
-			result = libusb_close((libusb_device_t*)scanner->internal_dev_ptr);
+			result = libusbi_close((libusbi_device_t*)scanner->internal_dev_ptr);
 			break;
 	}
 	if (result == 0)
@@ -208,7 +208,7 @@ int hp3900_read(scanner_t* scanner, void* buffer)
 {
 	switch (scanner->connection) {
 		case CONNECTION_LIBUSB:
-			return libusb_control_msg((libusb_device_t*)scanner->internal_dev_ptr,
+			return libusbi_control_msg((libusbi_device_t*)scanner->internal_dev_ptr,
 	                        0xc0, 0x04, 0xe968, 0x0100, (void *)buffer, 0x0002);
 			break;
 	}
@@ -220,7 +220,7 @@ void hp3900_flush(scanner_t* scanner)
 {
 	switch (scanner->connection) {
 		case CONNECTION_LIBUSB:
-			libusb_flush((libusb_device_t*)scanner->internal_dev_ptr);
+			libusbi_flush((libusbi_device_t*)scanner->internal_dev_ptr);
 			break;
 	}
 }
@@ -276,7 +276,7 @@ int scanbtnd_exit(void)
 {
 	syslog(LOG_INFO, "hp3900-backend: exit");
 	hp3900_detach_scanners();
-	libusb_exit(libusb_handle);
+	libusbi_exit(libusb_handle);
 	return 0;
 }
 

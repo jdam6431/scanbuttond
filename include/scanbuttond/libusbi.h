@@ -22,54 +22,54 @@
 #include <usb.h>
 #include "scanbuttond/scanbuttond.h"
 
-struct libusb_device;
-typedef struct libusb_device libusb_device_t;
+struct libusbi_device;
+typedef struct libusbi_device libusbi_device_t;
 
-struct libusb_device {
+struct libusbi_device {
 	int vendorID;
 	int productID;
 	char* location; // bus number + ":" + device number
 	struct usb_device* device;
-	struct usb_dev_handle* handle; // automatically set by libusb_open(...)
+	struct usb_dev_handle* handle; // automatically set by libusbi_open(...)
 	int interface;
 	int out_endpoint;
 	int in_endpoint;
-	libusb_device_t* next;
+	libusbi_device_t* next;
 };
 
-struct libusb_handle;
-typedef struct libusb_handle libusb_handle_t;
+struct libusbi_handle;
+typedef struct libusbi_handle libusbi_handle_t;
 
-struct libusb_handle {
-	libusb_device_t* devices;
+struct libusbi_handle {
+	libusbi_device_t* devices;
 	// rescanning info, timestamps???
 };
 
-libusb_handle_t* libusb_init(void);
+libusbi_handle_t* libusbi_init(void);
 
 // GLOBAL number of changed devices (does not require a handle!)
-int libusb_get_changed_device_count(void);
+int libusbi_get_changed_device_count(void);
 
-void libusb_rescan(libusb_handle_t* handle);
+void libusbi_rescan(libusbi_handle_t* handle);
 
-libusb_device_t* libusb_get_devices(libusb_handle_t* handle);
+libusbi_device_t* libusbi_get_devices(libusbi_handle_t* handle);
 
 // returns 0 on success, -EBUSY if the scanner is currently in use,
 // or -ENODEV if the scanner does no longer exist
-int libusb_open(libusb_device_t* device);
+int libusbi_open(libusbi_device_t* device);
 
-int libusb_close(libusb_device_t* device);
+int libusbi_close(libusbi_device_t* device);
 
-int libusb_read(libusb_device_t* device, void* buffer, int bytecount);
+int libusbi_read(libusbi_device_t* device, void* buffer, int bytecount);
 
-int libusb_write(libusb_device_t* device, void* buffer, int bytecount);
+int libusbi_write(libusbi_device_t* device, void* buffer, int bytecount);
 
 // flush bulk read queue
-void libusb_flush(libusb_device_t* device);
+void libusbi_flush(libusbi_device_t* device);
 
-int libusb_control_msg(libusb_device_t* device, int requesttype,
+int libusbi_control_msg(libusbi_device_t* device, int requesttype,
 					   int request, int value, int index, void* bytes, int size);
 
-void libusb_exit(libusb_handle_t* handle);
+void libusbi_exit(libusbi_handle_t* handle);
 
 #endif

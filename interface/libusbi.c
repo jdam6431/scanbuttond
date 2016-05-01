@@ -30,17 +30,17 @@
 int invocation_count = 0;
 
 
-libusb_handle_t* libusb_init(void)
+libusbi_handle_t* libusbi_init(void)
 {
-	libusb_handle_t* handle;
+	libusbi_handle_t* handle;
 	invocation_count++;
 	if (invocation_count == 1) {
 		syslog(LOG_INFO, "libusbi: initializing...");
 		usb_init();
 	}
-	handle = (libusb_handle_t*)malloc(sizeof(libusb_handle_t));
+	handle = (libusbi_handle_t*)malloc(sizeof(libusbi_handle_t));
 	handle->devices = NULL;
-	libusb_rescan(handle);
+	libusbi_rescan(handle);
 	return handle;
 }
 
@@ -133,9 +133,9 @@ static int libusb_search_out_endpoint(struct usb_device* device)
 }
 
 
-static void libusb_attach_device(struct usb_device* device, libusb_handle_t* handle)
+static void libusb_attach_device(struct usb_device* device, libusbi_handle_t* handle)
 {
-	libusb_device_t* libusb_device = (libusb_device_t*)malloc(sizeof(libusb_device_t));
+	libusbi_device_t* libusb_device = (libusbi_device_t*)malloc(sizeof(libusbi_device_t));
 	libusb_device->vendorID = device->descriptor.idVendor;
 	libusb_device->productID = device->descriptor.idProduct;
 
@@ -170,9 +170,9 @@ static void libusb_attach_device(struct usb_device* device, libusb_handle_t* han
 }
 
 
-static void libusb_detach_devices(libusb_handle_t* handle)
+static void libusb_detach_devices(libusbi_handle_t* handle)
 {
-	libusb_device_t* next;
+	libusbi_device_t* next;
 	while (handle->devices != NULL) {
 		next = handle->devices->next;
 		free(handle->devices->location);
@@ -182,7 +182,7 @@ static void libusb_detach_devices(libusb_handle_t* handle)
 }
 
 
-void libusb_rescan(libusb_handle_t* handle)
+void libusbi_rescan(libusbi_handle_t* handle)
 {
 	struct usb_bus *bus;
 	struct usb_device *device;
@@ -206,20 +206,20 @@ void libusb_rescan(libusb_handle_t* handle)
 }
 
 
-int libusb_get_changed_device_count(void)
+int libusbi_get_changed_device_count(void)
 {
 	usb_find_busses();
 	return usb_find_devices();
 }
 
 
-libusb_device_t* libusb_get_devices(libusb_handle_t* handle)
+libusbi_device_t* libusbi_get_devices(libusbi_handle_t* handle)
 {
 	return handle->devices;
 }
 
 
-int libusb_open(libusb_device_t* device)
+int libusbi_open(libusbi_device_t* device)
 {
 	int result;
 
@@ -262,7 +262,7 @@ int libusb_open(libusb_device_t* device)
 }
 
 
-int libusb_close(libusb_device_t* device)
+int libusbi_close(libusbi_device_t* device)
 {
 	int result;
 	result = usb_release_interface(device->handle, device->interface);
@@ -281,7 +281,7 @@ int libusb_close(libusb_device_t* device)
 }
 
 
-int libusb_read(libusb_device_t* device, void* buffer, int bytecount)
+int libusbi_read(libusbi_device_t* device, void* buffer, int bytecount)
 {
 	int num_bytes = usb_bulk_read(device->handle, device->in_endpoint,
 								  buffer, bytecount, TIMEOUT);
@@ -293,7 +293,7 @@ int libusb_read(libusb_device_t* device, void* buffer, int bytecount)
 }
 
 
-int libusb_write(libusb_device_t* device, void* buffer, int bytecount)
+int libusbi_write(libusbi_device_t* device, void* buffer, int bytecount)
 {
 	int num_bytes = usb_bulk_write(device->handle, device->out_endpoint,
 								   buffer, bytecount, TIMEOUT);
@@ -305,14 +305,14 @@ int libusb_write(libusb_device_t* device, void* buffer, int bytecount)
 }
 
 
-void libusb_flush(libusb_device_t* device)
+void libusbi_flush(libusbi_device_t* device)
 {
 	char buffer[16];
 	while (usb_bulk_read(device->handle, device->in_endpoint, buffer, 16, 500) > 0) {};
 }
 
 
-int libusb_control_msg(libusb_device_t* device, int requesttype, int request,
+int libusbi_control_msg(libusbi_device_t* device, int requesttype, int request,
 					   int value, int index, void* bytes, int size)
 {
 	int num_bytes = usb_control_msg(device->handle, requesttype, request, value,
@@ -326,11 +326,11 @@ int libusb_control_msg(libusb_device_t* device, int requesttype, int request,
 }
 
 
-void libusb_exit(libusb_handle_t* handle)
+void libusbi_exit(libusbi_handle_t* handle)
 {
 	invocation_count--;
 	if (invocation_count < 0) {
-		syslog(LOG_WARNING, "libusbi: libusb_exit called more often than libusb_init!!!");				
+		syslog(LOG_WARNING, "libusbi: libusbi_exit called more often than libusbi_init!!!");				
 	}
 	libusb_detach_devices(handle);
 	free(handle);
